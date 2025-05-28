@@ -66,30 +66,51 @@ We built **CertiChain** to tackle this head-on using:
 
 ---
 
-## 🖼️ Screenshots
+## Screenshots
+![Logo](./public/CertiChain.png)
 
-> *(Add actual screenshots here for dashboard, certificate preview, NFT wallet, cheating detection, etc.)*
+### Course Preview
+![Course Preview](./public/heeee.jpeg)
+
+### Hackathon Certificates
+![Hackathon Certificates](./public/th.jpeg)
+
+### Additional UI
+![Additional UI](./public/temp.png)
+
+## Run Instructions
+
+### Backend
+1. Navigate to the backend directory:
+   ```bash
+   cd nft-certificate/backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the backend server in development mode:
+   ```bash
+   nodemon server.js
+   ```
+   The backend server will run on port 5000 by default.
+
+### Frontend
+1. Navigate to the frontend directory (assumed to be `nft-certificate` root):
+   ```bash
+   cd nft-certificate
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the frontend development server:
+   ```bash
+   npm start
+   ```
+4. Open your browser and go to `http://localhost:5173` to access the application.
 
 ---
 
-## ⚙️ Run Locally
+This project provides a comprehensive platform for learning and earning blockchain-verified NFT certificates, enhancing trust and transparency in digital credentials.
 
-```bash
-# Clone the repo
-git clone https://github.com/NipunGoel02/CertiChain.git
-
-# Go to project directory
-cd CertiChain
-
-# Install dependencies
-npm install
-
-# Run frontend
-npm run dev
-
-# Run backend
-cd server
-npm install
-npm start
-
-# Make sure MongoDB and environment variables are configured.
