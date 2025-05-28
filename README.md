@@ -9,8 +9,7 @@
 ## 🌐 Live Project Links
 
 - 🌐 **GitHub Repository**: [https://github.com/NipunGoel02/CertiChain](https://github.com/NipunGoel02/CertiChain)
-- 💻 **Frontend URL**: (Add when deployed)
-- 🧠 **Demo Video**: (Add YouTube link here)
+-      **PPT video**: [https://drive.google.com/file/d/1B55GfWNC6QpMqnYgPGkVD3Jkd2sOqnIf/view?usp=sharing]
 - 📸 **Screenshots**: *(Scroll down ⬇️)*
 
 ---
@@ -75,8 +74,7 @@ We built **CertiChain** to tackle this head-on using:
 ### Hackathon Certificates
 ![Hackathon Certificates](./public/th.jpeg)
 
-### Additional UI
-![Additional UI](./public/temp.png)
+
 
 ## Run Instructions
 
