@@ -106,7 +106,7 @@ We built **CertiChain** to tackle this head-on using:
    ```
 3. Start the frontend development server:
    ```bash
-   npm start
+   npm run dev
    ```
 4. Open your browser and go to `http://localhost:5173` to access the application.
 
