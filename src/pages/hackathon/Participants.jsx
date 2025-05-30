@@ -14,7 +14,6 @@ const Participants = () => {
     const fetchParticipants = async () => {
       try {
         setLoading(true);
-        // Assuming backend API to get participants for organizer's hackathons
         const response = await axios.get('/api/hackathons/organizer/participants', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -27,7 +26,6 @@ const Participants = () => {
         setLoading(false);
       }
     };
-
     fetchParticipants();
   }, []);
 
@@ -35,6 +33,7 @@ const Participants = () => {
     setCertificateTypes(prev => ({ ...prev, [participantId]: value }));
   };
 
+  // Accept the full participant object, not just the ID
   const handleGenerateCertificate = async (participant) => {
     const certificateType = certificateTypes[participant._id] || 'participation';
     setProcessingParticipantId(participant._id);
@@ -44,14 +43,14 @@ const Participants = () => {
       const token = localStorage.getItem('token');
       await axios.post('/api/hackathons/organizer/certificates/generate', {
         participantId: participant._id,
-        hackathonId: participant.hackathons[0]?.id, // Assuming first hackathon id
+        hackathonId: participant.hackathonId, // Use backend-provided hackathonId
         certificateType: certificateType
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSuccessMessage(`Certificate request sent for ${participant.name} (${certificateType})`);
+      setSuccessMessage(`Certificate request sent`);
     } catch (err) {
-      setErrorMessage(`Failed to send certificate request for ${participant.name}`);
+      setErrorMessage(`Failed to send certificate request for `);
     } finally {
       setProcessingParticipantId(null);
     }

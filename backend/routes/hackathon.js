@@ -173,13 +173,12 @@ router.post('/:id/submissions', authMiddleware, async (req, res) => {
 });
 
 
-
 router.get('/organizer/participants', authMiddleware, async (req, res) => {
   try {
     const organizerId = req.user.id;
     // Find hackathons organized by the current user
     const hackathons = await Hackathon.find({ organizer: organizerId }).populate('participants', 'username email');
-    // Aggregate participants with hackathon title
+    // Aggregate participants with hackathon title and ID
     const participants = [];
     hackathons.forEach(hackathon => {
       hackathon.participants.forEach(participant => {
@@ -187,7 +186,8 @@ router.get('/organizer/participants', authMiddleware, async (req, res) => {
           _id: participant._id,
           name: participant.name,
           email: participant.email,
-          hackathonTitle: hackathon.title
+          hackathonTitle: hackathon.title,
+          hackathonId: hackathon._id // <-- This is crucial!
         });
       });
     });
@@ -197,7 +197,6 @@ router.get('/organizer/participants', authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch participants' });
   }
 });
-
 
 router.get('/organizer/submissions', authMiddleware, async (req, res) => {
   try {
@@ -262,6 +261,7 @@ router.get('/organizer/certificates/eligible', authMiddleware, async (req, res) 
 
 router.post('/organizer/certificates/generate', authMiddleware, async (req, res) => {
   try {
+    console.log('Certificate generation request body:', req.body); // Added logging
     const organizerId = req.user.id;
     const { participantId, hackathonId, certificateType } = req.body;
     if (!participantId || !hackathonId || !certificateType) {

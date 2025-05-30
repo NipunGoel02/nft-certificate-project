@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../../services/apiClient';
 
 const OrganizerCertificates = () => {
   const [eligibleUsers, setEligibleUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [generating, setGenerating] = useState(null); // userId for which generation is in progress
+  const [generating, setGenerating] = useState(''); // key: userId_hackathonId
   const [successMessage, setSuccessMessage] = useState(null);
   const [selectedCertificateTypes, setSelectedCertificateTypes] = useState({}); // key: userId_hackathonId, value: certificateType
 
@@ -17,11 +17,10 @@ const OrganizerCertificates = () => {
         const config = {
           headers: { Authorization: `Bearer ${token}` }
         };
-        const response = await axios.get('/api/hackathons/organizer/certificates/eligible', config);
+        const response = await apiClient.get('/hackathons/organizer/certificates/eligible', config);
         setEligibleUsers(response.data);
         setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch eligible users');
+      } catch (err) { 
         setLoading(false);
       }
     };
@@ -36,39 +35,47 @@ const OrganizerCertificates = () => {
   };
 
   const handleGenerateCertificate = async (userId, hackathonId) => {
+    const key = `${userId}_${hackathonId}`;
     try {
-      setGenerating(userId);
+      setGenerating(key);
       setSuccessMessage(null);
+      setError(null);
+      if (!userId) {
+        setError('participantId is undefined');
+        setGenerating('');
+        return;
+      }
+      if (!hackathonId) {
+        setError('hackathonId is undefined');
+        setGenerating('');
+        return;
+      }
       const token = localStorage.getItem('token');
       const config = {
         headers: { Authorization: `Bearer ${token}` }
       };
-      // Find hackathon by id for this user
+      // Find user and hackathon objects for display
       const user = eligibleUsers.find(u => u._id === userId);
-      if (!user) {
-        setError('User not found');
-        setGenerating(null);
-        return;
-      }
-      const hackathonObj = user.hackathons.find(h => h.id === hackathonId);
-      if (!hackathonObj) {
-        setError('Hackathon not found for user');
-        setGenerating(null);
-        return;
-      }
-      const key = `${userId}_${hackathonId}`;
+      const hackathonObj = user?.hackathons.find(h => h.id === hackathonId);
       const certificateType = selectedCertificateTypes[key] || 'participation'; // default to participation if not selected
       const body = {
         participantId: userId,
         hackathonId: hackathonId,
         certificateType: certificateType
       };
-      await axios.post('/api/hackathons/organizer/certificates/generate', body, config);
-      setSuccessMessage(`Certificate generation request sent to ${user.name} for ${hackathonObj.title} as ${certificateType}`);
-      setGenerating(null);
+      try {
+        await apiClient.post('/hackathons/organizer/certificates/generate', body, config);
+        setSuccessMessage(`Certificate generation request sent to ${user.name} for ${hackathonObj.title} as ${certificateType}`);
+      } catch (error) {
+        if (error.response && error.response.data && error.response.data.message) {
+          console.log((error.response.data.message));
+        } else {
+          setError('Failed to send certificate request');
+        }
+      }
+      setGenerating('');
     } catch (err) {
-      setError('Failed to generate certificate');
-      setGenerating(null);
+      setGenerating('');
     }
   };
 
@@ -86,7 +93,21 @@ const OrganizerCertificates = () => {
     );
   }
 
-  if (eligibleUsers.length === 0) {
+  // Flatten to one row per user per hackathon
+  const rows = [];
+  eligibleUsers.forEach(user => {
+    user.hackathons.forEach(h => {
+      rows.push({
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        hackathonId: h.id,
+        hackathonTitle: h.title,
+      });
+    });
+  });
+
+  if (rows.length === 0) {
     return (
       <div className="text-center mt-8 text-gray-600">
         No users eligible for certificates.
@@ -108,51 +129,43 @@ const OrganizerCertificates = () => {
             <tr className="bg-teal-600 text-white">
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Hackathons</th>
+              <th className="px-4 py-2">Hackathon</th>
               <th className="px-4 py-2">Certificate Type</th>
               <th className="px-4 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
-            {eligibleUsers.map(user => (
-              <tr key={user._id} className="border-b">
-                <td className="px-4 py-2">{user.name}</td>
-                <td className="px-4 py-2">{user.email}</td>
-                <td className="px-4 py-2">
-                  {user.hackathons.map(h => h.title).join(', ')}
-                </td>
-                <td className="px-4 py-2">
-                  {user.hackathons.map(h => {
-                    const key = `${user._id}_${h.id}`;
-                    return (
-                      <select
-                        key={h.id}
-                        value={selectedCertificateTypes[key] || 'participation'}
-                        onChange={(e) => handleCertificateTypeChange(user._id, h.id, e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 mr-2"
-                      >
-                        <option value="participation">Participation</option>
-                        <option value="winner1">Winner 1</option>
-                        <option value="winner2">Winner 2</option>
-                        <option value="winner3">Winner 3</option>
-                      </select>
-                    );
-                  })}
-                </td>
-                <td className="px-4 py-2">
-                  {user.hackathons.map(h => (
-                    <button
-                      key={h.id}
-                      onClick={() => handleGenerateCertificate(user._id, h.id)}
-                      disabled={generating === user._id}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded mr-2"
+            {rows.map(row => {
+              const key = `${row.userId}_${row.hackathonId}`;
+              return (
+                <tr key={key} className="border-b">
+                  <td className="px-4 py-2">{row.userName}</td>
+                  <td className="px-4 py-2">{row.userEmail}</td>
+                  <td className="px-4 py-2">{row.hackathonTitle}</td>
+                  <td className="px-4 py-2">
+                    <select
+                      value={selectedCertificateTypes[key] || 'participation'}
+                      onChange={(e) => handleCertificateTypeChange(row.userId, row.hackathonId, e.target.value)}
+                      className="border border-gray-300 rounded px-2 py-1"
                     >
-                      {generating === user._id ? 'Generating...' : `Generate for ${h.title}`}
+                      <option value="participation">Participation</option>
+                      <option value="winner1">Winner 1</option>
+                      <option value="winner2">Winner 2</option>
+                      <option value="winner3">Winner 3</option>
+                    </select>
+                  </td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => handleGenerateCertificate(row.userId, row.hackathonId)}
+                      disabled={generating === key}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded"
+                    >
+                      {generating === key ? 'Generating...' : 'Generate Certificate'}
                     </button>
-                  ))}
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
